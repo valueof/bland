@@ -1,27 +1,17 @@
-<html>
-    Hello, World!
-
-    <table>
-        <thead>
-            <td>Title</td>
-            <td>Shortcut</td>
-            <td>Description</td>
-            <td>Created At</td>
-            <td>Updated At</td>
-        </thead>
-
-        {{range .Bookmarks}}
-            <tr id="{{.ID}}">
-                <td><a href="{{.URL}}">{{.Title}}</a></td>
-                <td>{{.Shortcut}}</td>
-                <td>{{.Description}}</td>
-                <td>{{.CreatedAt}}</td>
-                <td>{{.UpdatedAt}}</td>
-            </tr>
-        {{else}}
-            <tr>
-                <td colspan="3">No results</td>
-            </tr>
-        {{end}}
-    </table>
-</html>
+{{define "content"}}
+<table>
+    {{range .Bookmarks}}
+        <tr id="{{.ID}}">
+            <td><a href="{{.URL}}">{{.Title}}</a></td>
+            <td>{{.Shortcut}}</td>
+            <td>{{.Description}}</td>
+            <td>{{.CreatedAt}}</td>
+            <td>{{.UpdatedAt}}</td>
+        </tr>
+    {{else}}
+        <tr>
+            <td colspan="3">No results</td>
+        </tr>
+    {{end}}
+</table>
+{{end}}

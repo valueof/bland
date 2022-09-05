@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"os"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -34,7 +33,7 @@ type Bookmark struct {
 	Title       string
 	Shortcut    string
 	Description string
-	CreatedAt   time.Time
+	CreatedAt   sql.NullTime
 	UpdatedAt   sql.NullTime
 	DeletedAt   sql.NullTime
 	ReadAt      sql.NullTime
@@ -72,6 +71,23 @@ from bookmarks`
 
 	if err = rows.Err(); err != nil {
 		return nil, err
+	}
+
+	return
+}
+
+func AddBookmark(b Bookmark) (id int64, err error) {
+	query := `
+insert into bookmarks (url, title, shortcut, description, createdAt) values(?, ?, ?, ?, now())`
+
+	result, err := db.Exec(query, b.URL, b.Title, b.Shortcut, b.Description)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err = result.LastInsertId()
+	if err != nil {
+		return 0, err
 	}
 
 	return

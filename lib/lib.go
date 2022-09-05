@@ -43,8 +43,9 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, name string, data an
 	ctx := r.Context()
 	logger := GetLogger(ctx)
 
-	f := filepath.Join("templates", name)
-	t, err := template.New(name).ParseFiles(f)
+	templates := []string{filepath.Join("templates", "base.html")}
+	templates = append(templates, filepath.Join("templates", name))
+	t, err := template.New("base.html").ParseFiles(templates...)
 	if err != nil {
 		logger.Printf("ParseFiles(templates/%s): %v", name, err)
 		w.WriteHeader(http.StatusInternalServerError)

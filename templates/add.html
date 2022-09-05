@@ -1,0 +1,47 @@
+{{define "content"}}
+<form name="addURL" action="/add" method="POST">
+    <div class="form">
+        <div class="row">
+            <label for="url">url:</label>
+            <input type="text" id="url" name="url" placeholder="https://example.com/great-article" />
+        </div>
+
+        <div class="row row--attached">
+            <a href="#">fetch metadata</a>
+        </div>
+
+        <div class="row">
+            <label for="shortcut">shortcut:</label>
+            <input type="text" id="shortcut" name="shortcut" />
+        </div>
+
+        <div class="row">
+            <label for="title">title:</label>
+            <input type="text" id="title" name="title" placeholder="" />
+        </div>
+
+        <div class="row">
+            <label for="desc">description:</label>
+            <textarea id="desc" name="description" rows="10"></textarea>
+        </div>
+
+        <div class="row">
+            <label for="tags">tags:</label>
+            <input type="text" id="tags" name="tags" placeholder="tag one, tag two" />
+        </div>
+
+        <div class="row">
+            <label for="authors">authors:</label>
+            <input type="text" id="authors" name="authors" />
+        </div>
+
+        <div class="row u-justifyContentEnd">
+            <div class="u-marginRight25">
+                <input type="checkbox" id="toread" name="toread" />
+                <label for="toread">to read</label>
+            </div>
+            <input type="submit" value="Save" />
+        </div>
+    </div>
+</form>
+{{end}}

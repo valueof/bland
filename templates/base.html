@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8">
+<title>{{.Title}}</title>
+<link rel="stylesheet" href="/static/bland.css">
+
+<header>
+    <nav>
+        <span class="group">
+            show:
+            {{if eq .ActiveNav "/"}}
+                <span class="navitem">all</span>
+            {{else}}
+                <a href="/" class="navitem">all</a>
+            {{end}}
+
+            <a href="/unread" class="navitem">unread</a>
+            <a href="/shortcuts" class="navitem">shortcuts</a>
+            <a href="/tags" class="navitem">tags</a>
+            <a href="/authors" class="navitem">authors</a>
+
+            &bullet;
+
+            {{if eq .ActiveNav "/add"}}
+                <span class="navitem">add url</span>
+            {{else}}
+                <a href="/add" class="navitem">add url</a>
+            {{end}}
+        </span>
+    </nav>
+</header>
+
+{{template "content" .}}

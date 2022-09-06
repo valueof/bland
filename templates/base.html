@@ -14,10 +14,29 @@
                 <a href="/" class="navitem">all</a>
             {{end}}
 
-            <a href="/unread" class="navitem">unread</a>
-            <a href="/shortcuts" class="navitem">shortcuts</a>
-            <a href="/tags" class="navitem">tags</a>
-            <a href="/authors" class="navitem">authors</a>
+            {{if eq .ActiveNav "/unread"}}
+                <span class="navitem">unread</span>
+            {{else}}
+                <a href="/unread" class="navitem">unread</a>
+            {{end}}
+
+            {{if eq .ActiveNav "/shortcuts"}}
+                <span class="navitem">shortcuts</span>
+            {{else}}
+                <a href="/shortcuts" class="navitem">shortcuts</a>
+            {{end}}
+
+            {{if eq .ActiveNav "/tags"}}
+                <span class="navitem">tags</span>
+            {{else}}
+                <a href="/tags" class="navitem">tags</a>
+            {{end}}
+
+            {{if eq .ActiveNav "/authors"}}
+                <span class="navitem">authors</span>
+            {{else}}
+                <a href="/authors" class="navitem">authors</a>
+            {{end}}
 
             &bullet;
 

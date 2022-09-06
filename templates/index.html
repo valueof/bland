@@ -1,17 +1,41 @@
 {{define "content"}}
-<table>
+<div class="bookmarks">
     {{range .Bookmarks}}
-        <tr id="{{.ID}}">
-            <td><a href="{{.URL}}">{{.Title}}</a></td>
-            <td>{{.Shortcut}}</td>
-            <td>{{.Description}}</td>
-            <td>{{.CreatedAt}}</td>
-            <td>{{.UpdatedAt}}</td>
-        </tr>
+        <div class="bookmarks--bookmark" id="bookmark-{{.ID}}">
+            <h4>
+                <a href="{{.URL}}">{{.Title}}</a>
+                {{if .Shortcut}}
+                <span class="u-pill">
+                    <span class="u-dimmed">crow/</span>{{.Shortcut}}</span>
+                {{end}}
+            </h4>
+
+            <p>{{addBreaks .Description}}</p>
+
+            {{if or (gt (len .Tags) 0) (gt (len .Authors) 0)}}
+            <div class="bookmarks--tags u-marginTop10">
+                {{range .Tags}}<a href="/tags/{{.}}">{{.}}</a>{{end}}
+
+                {{if gt (len .Authors) 0}}
+                <span class="u-dimmed">by: </span>
+                {{range .Authors}}<a href="/authors/{{.}}">{{.}}</a>{{end}}
+                {{end}}
+            </div>
+            {{end}}
+
+            <div class="bookmarks--meta u-marginTop10">
+                <span class="u-dimmed">{{toLower (.CreatedAt.Format "January _2, 2006")}}</span>
+                <span>
+                    {{if .ToRead}}
+                    <a href="#">mark as read</a>&nbsp;&bullet;
+                    {{end}}
+                    <a href="#">edit</a>&nbsp;&bullet;
+                    <a href="#">delete</a>
+                </span>
+            </div>
+        </div>
     {{else}}
-        <tr>
-            <td colspan="3">No results</td>
-        </tr>
+        <p>No results</p>
     {{end}}
-</table>
+</div>
 {{end}}

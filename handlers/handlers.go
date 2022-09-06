@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/valueof/bland/lib"
 	"github.com/valueof/bland/models"
@@ -10,6 +11,8 @@ import (
 
 func RegisterHandlers(r *http.ServeMux) {
 	r.HandleFunc("/", index)
+	r.HandleFunc("/unread", unread)
+	r.HandleFunc("/shortcuts", shortcuts)
 	r.HandleFunc("/add", addURL)
 }
 
@@ -35,7 +38,39 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 	lib.RenderTemplate(w, r, "index.html", TemplateData{
 		ActiveNav: "/",
-		Title:     "Bland",
+		Title:     "bland: all",
+		Bookmarks: &bookmarks,
+	})
+}
+
+func unread(w http.ResponseWriter, r *http.Request) {
+	bookmarks, err := models.FetchUnreadBookmarks()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, err)
+		return
+	}
+
+	lib.RenderTemplate(w, r, "index.html", TemplateData{
+		ActiveNav: "/unread",
+		Title:     "bland: unread",
+		Bookmarks: &bookmarks,
+	})
+}
+
+func shortcuts(w http.ResponseWriter, r *http.Request) {
+	bookmarks, err := models.FetchShortcuts()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, err)
+		return
+	}
+
+	lib.RenderTemplate(w, r, "index.html", TemplateData{
+		ActiveNav: "/shortcuts",
+		Title:     "bland: shortcuts",
 		Bookmarks: &bookmarks,
 	})
 }
@@ -44,7 +79,7 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		lib.RenderTemplate(w, r, "add.html", TemplateData{
 			ActiveNav: "/add",
-			Title:     "Add URL",
+			Title:     "bland: add url",
 		})
 		return
 	}
@@ -62,6 +97,16 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 			Title:       r.FormValue("title"),
 			Description: r.FormValue("description"),
 			Shortcut:    r.FormValue("shortcut"),
+			Tags:        []string{},
+			Authors:     []string{},
+			ToRead:      r.FormValue("toread") != "",
+		}
+
+		tags := strings.TrimSpace(r.FormValue("tags"))
+		if len(tags) > 0 {
+			for _, t := range strings.Split(tags, " ") {
+				b.Tags = append(b.Tags, strings.TrimSpace(t))
+			}
 		}
 
 		if _, err := models.AddBookmark(b); err != nil {

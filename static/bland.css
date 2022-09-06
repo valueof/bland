@@ -8,7 +8,7 @@ body {
 
 nav {
     margin-bottom: 20px;
-    border-bottom: dashed 1px orange;
+    border-bottom: dashed 1px brown;
 }
 
 nav .group {
@@ -26,6 +26,7 @@ nav .group .navitem {
 
 nav .group span.navitem {
     background-color: #fff5ca;
+    border-radius: 2px;
 }
 
 .form {
@@ -70,7 +71,66 @@ nav .group span.navitem {
     border-radius: 3px;
 }
 
+.bookmarks {
+    width: 700px;
+    margin: auto 15px;
+}
+
+.bookmarks--bookmark {
+    margin-bottom: 30px;
+}
+
+.bookmarks--bookmark:last-child {
+    margin-bottom: 0;
+}
+
+.bookmarks--bookmark h4 {
+    margin: 0 0 10px 0;
+}
+
+.bookmarks--bookmark p {
+    margin: 0;
+}
+
+.bookmarks--meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 80%;
+}
+
+.bookmarks--meta a {
+    color: rgb(0, 0, 238);
+}
+
+.bookmarks--tags {
+    font-size: 80%;
+}
+
+.bookmarks--tags a {
+    color: brown;
+    margin-right: 5px;
+}
+
+.bookmarks--tags a:last-child {
+    margin-right: none;
+}
+
+.bookmarks--authors a {
+    font-size: 80%;
+}
+
 /* utils */
 .u-justifyContentEnd { justify-content: flex-end !important; }
-
+.u-marginTop10 { margin-top: 10px !important; }
 .u-marginRight25 { margin-right: 25px !important; }
+.u-pill {
+    display: inline-block;
+    font-weight: 400;
+    background-color: #fff5ca;
+    padding: 3px 5px;
+    border-radius: 2px;
+    font-size: 80%;
+}
+.u-dimmed {
+    color: #777 !important;
+}

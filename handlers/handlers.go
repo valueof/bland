@@ -24,6 +24,11 @@ type TemplateData struct {
 
 func index(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
+		if url, ok := models.GetShortcutURL(strings.Trim(r.URL.Path, "/")); ok {
+			http.Redirect(w, r, url, http.StatusSeeOther)
+			return
+		}
+
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintln(w, "404 Not Found")
 		return

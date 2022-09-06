@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -221,6 +222,27 @@ order by createdAt desc;
 `
 
 	return fetchBookmarks(q)
+}
+
+func GetShortcutURL(name string) (string, bool) {
+	q := `
+select url
+from bookmarks
+where
+	shortcut = ? and
+	deletedAt is null
+order by createdAt desc
+limit 1`
+
+	var url string
+	if err := db.QueryRow(q, name).Scan(&url); err != nil {
+		if err != sql.ErrNoRows {
+			// TODO: use logger
+			fmt.Println(err)
+		}
+		return "", false
+	}
+	return url, true
 }
 
 func AddBookmark(data Bookmark) (id int64, err error) {

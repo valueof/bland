@@ -8,31 +8,31 @@
     <nav>
         <span class="group">
             show:
-            {{if eq .ActiveNav "/"}}
+            {{if eq .Path "/"}}
                 <span class="navitem">all</span>
             {{else}}
                 <a href="/" class="navitem">all</a>
             {{end}}
 
-            {{if eq .ActiveNav "/unread"}}
+            {{if hasPrefix .Path "/unread"}}
                 <span class="navitem">unread</span>
             {{else}}
                 <a href="/unread" class="navitem">unread</a>
             {{end}}
 
-            {{if eq .ActiveNav "/shortcuts"}}
+            {{if hasPrefix .Path "/shortcuts"}}
                 <span class="navitem">shortcuts</span>
             {{else}}
                 <a href="/shortcuts" class="navitem">shortcuts</a>
             {{end}}
 
-            {{if eq .ActiveNav "/tags"}}
+            {{if hasPrefix .Path "/tags"}}
                 <span class="navitem">tags</span>
             {{else}}
                 <a href="/tags" class="navitem">tags</a>
             {{end}}
 
-            {{if eq .ActiveNav "/authors"}}
+            {{if hasPrefix .Path "/authors"}}
                 <span class="navitem">authors</span>
             {{else}}
                 <a href="/authors" class="navitem">authors</a>
@@ -40,7 +40,7 @@
 
             &bullet;
 
-            {{if eq .ActiveNav "/add"}}
+            {{if hasPrefix .Path "/add"}}
                 <span class="navitem">add url</span>
             {{else}}
                 <a href="/add" class="navitem">add url</a>

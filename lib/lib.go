@@ -49,11 +49,22 @@ func addBreaks(unsafe string) template.HTML {
 	return template.HTML(safe)
 }
 
-func RenderTemplate(w http.ResponseWriter, r *http.Request, name string, data any) {
+type TemplateData struct {
+	Data  any
+	Path  string
+	Title string
+	Host  string
+}
+
+func RenderTemplate(w http.ResponseWriter, r *http.Request, name string, data TemplateData) {
 	ctx := r.Context()
 	logger := GetLogger(ctx)
 
-	funcs := template.FuncMap{"addBreaks": addBreaks, "toLower": strings.ToLower}
+	funcs := template.FuncMap{
+		"addBreaks": addBreaks,
+		"toLower":   strings.ToLower,
+		"hasPrefix": strings.HasPrefix,
+	}
 
 	templates := []string{filepath.Join("templates", "base.html")}
 	templates = append(templates, filepath.Join("templates", name))
@@ -64,6 +75,9 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, name string, data an
 		fmt.Fprintln(w, "Internal Server Error")
 		return
 	}
+
+	data.Host = r.Host
+	data.Path = r.URL.Path
 
 	err = t.Execute(w, data)
 	if err != nil {

@@ -16,9 +16,7 @@ func RegisterHandlers(r *http.ServeMux) {
 	r.HandleFunc("/add", addURL)
 }
 
-type TemplateData struct {
-	ActiveNav string
-	Title     string
+type withBookmarks struct {
 	Bookmarks *[]models.Bookmark
 }
 
@@ -41,10 +39,11 @@ func index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lib.RenderTemplate(w, r, "index.html", TemplateData{
-		ActiveNav: "/",
-		Title:     "bland: all",
-		Bookmarks: &bookmarks,
+	lib.RenderTemplate(w, r, "index.html", lib.TemplateData{
+		Title: "bland: all",
+		Data: withBookmarks{
+			Bookmarks: &bookmarks,
+		},
 	})
 }
 
@@ -57,10 +56,11 @@ func unread(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lib.RenderTemplate(w, r, "index.html", TemplateData{
-		ActiveNav: "/unread",
-		Title:     "bland: unread",
-		Bookmarks: &bookmarks,
+	lib.RenderTemplate(w, r, "index.html", lib.TemplateData{
+		Title: "bland: unread",
+		Data: withBookmarks{
+			Bookmarks: &bookmarks,
+		},
 	})
 }
 
@@ -73,18 +73,18 @@ func shortcuts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lib.RenderTemplate(w, r, "index.html", TemplateData{
-		ActiveNav: "/shortcuts",
-		Title:     "bland: shortcuts",
-		Bookmarks: &bookmarks,
+	lib.RenderTemplate(w, r, "index.html", lib.TemplateData{
+		Title: "bland: shortcuts",
+		Data: withBookmarks{
+			Bookmarks: &bookmarks,
+		},
 	})
 }
 
 func addURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		lib.RenderTemplate(w, r, "add.html", TemplateData{
-			ActiveNav: "/add",
-			Title:     "bland: add url",
+		lib.RenderTemplate(w, r, "add.html", lib.TemplateData{
+			Title: "bland: add url",
 		})
 		return
 	}
@@ -123,3 +123,14 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
+
+// func fetchMetadata(w http.ResponseWriter, r *http.Request) {
+// meta name=description content
+// meta name=twitter:description content
+// meta name=og:description content
+// meta name=twitter:title content
+// meta property=og:title content
+// title
+//		aux: look for header/h1 tags in the body
+// og:site_name content can help with cleaning up title?
+// }

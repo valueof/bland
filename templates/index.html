@@ -1,12 +1,14 @@
 {{define "content"}}
+{{$host := .Host}}
+
 <div class="bookmarks">
-    {{range .Bookmarks}}
+    {{range .Data.Bookmarks}}
         <div class="bookmarks--bookmark" id="bookmark-{{.ID}}">
             <h4>
                 <a href="{{.URL}}">{{.Title}}</a>
                 {{if .Shortcut}}
                 <span class="u-pill">
-                    <span class="u-dimmed">crow/</span>{{.Shortcut}}</span>
+                    <span class="u-dimmed">{{$host}}/</span>{{.Shortcut}}</span>
                 {{end}}
             </h4>
 

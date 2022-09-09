@@ -273,6 +273,49 @@ order by createdAt desc;
 	return fetchBookmarks(q)
 }
 
+func FetchBookmarkByID(id int64) (bookmark *Bookmark, err error) {
+	q := `
+select
+	id,
+	url,
+	title,
+	shortcut,
+	description,
+	tags,
+	createdAt,
+	updatedAt,
+	deletedAt,
+	readAt
+from bookmarks
+where id = ?
+limit 1
+`
+	b := dbBookmark{}
+	row := db.QueryRow(q, id)
+	err = row.Scan(
+		&b.ID,
+		&b.URL,
+		&b.Title,
+		&b.Shortcut,
+		&b.Description,
+		&b.Tags,
+		&b.CreatedAt,
+		&b.UpdatedAt,
+		&b.DeletedAt,
+		&b.ReadAt,
+	)
+
+	if err != nil {
+		if err != sql.ErrNoRows {
+			fmt.Printf("models.FetchBookmarkByID: %v\n", err)
+		}
+		return nil, err
+	}
+
+	out := toBookmark(b)
+	return &out, nil
+}
+
 func FetchBookmarksByTag(name string) (bookmarks []Bookmark, err error) {
 	q := `
 select

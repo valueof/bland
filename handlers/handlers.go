@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/valueof/bland/lib"
@@ -13,9 +14,10 @@ func RegisterHandlers(r *http.ServeMux) {
 	r.HandleFunc("/", index)
 	r.HandleFunc("/unread/", unread)
 	r.HandleFunc("/shortcuts/", shortcuts)
-	r.HandleFunc("/add/", addURL)
 	r.HandleFunc("/tags/", tags)
 	r.HandleFunc("/authors/", authors)
+	r.HandleFunc("/add/", addURL)
+	r.HandleFunc("/edit/", editURL)
 }
 
 type withBookmarks struct {
@@ -24,6 +26,16 @@ type withBookmarks struct {
 
 type withTags struct {
 	Tags *[]models.Tag
+}
+
+type withFormValues struct {
+	ID          int64
+	URL         string
+	Title       string
+	Description string
+	Shortcut    string
+	Tags        string
+	ToRead      bool
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -166,12 +178,14 @@ func authors(w http.ResponseWriter, r *http.Request) {
 
 func addURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		lib.RenderTemplate(w, r, "add.html", lib.TemplateData{
+		lib.RenderTemplate(w, r, "form.html", lib.TemplateData{
 			Title: "bland: add url",
+			Data:  withFormValues{},
 		})
 		return
 	}
 
+	// TODO(anton): Add server-side checking for required fields
 	if r.Method == "POST" {
 		err := r.ParseForm()
 		if err != nil {
@@ -215,6 +229,42 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 		}
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
+	}
+}
+
+func editURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		id, err := strconv.Atoi(strings.Trim(strings.TrimPrefix(r.URL.Path, "/edit/"), "/"))
+		if err != nil {
+			fmt.Printf("editURL: %v\n", err)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		b, err := models.FetchBookmarkByID(int64(id))
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		tags := []string{}
+		tags = append(tags, b.Tags...)
+		for _, a := range b.Authors {
+			tags = append(tags, "by:"+a)
+		}
+
+		lib.RenderTemplate(w, r, "form.html", lib.TemplateData{
+			Title: "bland: add url",
+			Data: withFormValues{
+				ID:          b.ID,
+				URL:         b.URL,
+				Title:       b.Title,
+				Description: b.Description,
+				Shortcut:    b.Shortcut,
+				Tags:        strings.Join(tags, " "),
+			},
+		})
+		return
 	}
 }
 

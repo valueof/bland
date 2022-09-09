@@ -1,9 +1,13 @@
 {{define "content"}}
-<form name="addURL" action="/add" method="POST">
+<form name="addURL" action="{{maybeAddSlash .Path}}" method="POST">
+    {{with .Data}}
     <div class="form">
         <div class="row">
             <label for="url">url:</label>
-            <input type="text" id="url" name="url" placeholder="https://example.com/great-article" />
+            <input type="text" id="url" name="url"
+                required
+                value="{{.URL}}"
+                placeholder="https://example.com/great-article" />
         </div>
 
         <div class="row row--attached">
@@ -12,31 +16,35 @@
 
         <div class="row">
             <label for="title">title:</label>
-            <input type="text" id="title" name="title" placeholder="" />
+            <input type="text" id="title" name="title" required value="{{.Title}}" />
         </div>
 
         <div class="row">
             <label for="desc">description:</label>
-            <textarea id="desc" name="description" rows="10"></textarea>
+            <textarea id="desc" name="description" rows="10">{{.Description}}</textarea>
         </div>
 
         <div class="row">
             <label for="shortcut">shortcut:</label>
-            <input type="text" id="shortcut" name="shortcut" />
+            <input type="text" id="shortcut" name="shortcut" value="{{.Shortcut}}" />
         </div>
 
         <div class="row">
             <label for="tags">tags:</label>
-            <input type="text" id="tags" name="tags" placeholder="some-tag by:author-name" />
+            <input type="text" id="tags" name="tags"
+                value="{{.Tags}}"
+                placeholder="some-tag by:author-name" />
         </div>
 
         <div class="row u-justifyContentEnd">
             <div class="u-marginRight25">
-                <input type="checkbox" id="toread" name="toread" />
+                <input type="checkbox" id="toread" name="toread"
+                    {{if .ToRead}}checked{{end}} />
                 <label for="toread">to read</label>
             </div>
             <input type="submit" value="Save" />
         </div>
     </div>
+    {{end}}
 </form>
 {{end}}

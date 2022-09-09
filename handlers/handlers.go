@@ -93,7 +93,7 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(w, err)
+			fmt.Println(err)
 			return
 		}
 
@@ -114,9 +114,21 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if _, err := models.AddBookmark(b); err != nil {
+		tx, err := models.BeginTx(r.Context())
+		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(w, err)
+			return
+		}
+
+		if _, err := tx.AddBookmark(b); err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 

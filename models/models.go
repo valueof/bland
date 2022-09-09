@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -245,12 +246,97 @@ limit 1`
 	return url, true
 }
 
-func AddBookmark(data Bookmark) (id int64, err error) {
-	query := `
-insert into bookmarks (url, title, shortcut, description, tags, createdAt, updatedAt, readAt) values(?, ?, ?, ?, ?, ?, ?, ?)`
+type Tx struct {
+	ctx   context.Context
+	sqlTx *sql.Tx
+}
+
+func BeginTx(ctx context.Context) (tx *Tx, err error) {
+	sqlTx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		fmt.Printf("BeginTX: %v\n", err)
+		return nil, err
+	}
+
+	tx = &Tx{
+		ctx:   ctx,
+		sqlTx: sqlTx,
+	}
+
+	return tx, nil
+}
+
+func (tx *Tx) Insert(q string, args ...any) (id int64, err error) {
+	res, err := tx.sqlTx.Exec(q, args...)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err = res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (tx *Tx) Commit() (err error) {
+	err = tx.sqlTx.Commit()
+	if err != nil {
+		fmt.Printf("Tx.Commit: %v\n", err)
+	}
+	return
+}
+
+func (tx *Tx) Rollback() (err error) {
+	err = tx.sqlTx.Rollback()
+	if err != nil {
+		fmt.Printf("Tx.Rollback: %v\n", err)
+	}
+	return
+}
+
+func (tx *Tx) AddBookmark(data Bookmark) (id int64, err error) {
+	tags_map := map[string]int64{}
+	for _, name := range data.Tags {
+		id, err := tx.AddTag(name)
+		if err != nil {
+			fmt.Printf("Tx.AddTag: %v\n", err)
+			return 0, err
+		}
+
+		tags_map[name] = id
+	}
 
 	b := fromBookmark(data)
-	result, err := db.Exec(query, b.URL, b.Title, b.Shortcut, b.Description, b.Tags, b.CreatedAt, b.UpdatedAt, b.ReadAt)
+	q1 := `insert into bookmarks (url, title, shortcut, description, tags, createdAt, updatedAt, readAt) values(?, ?, ?, ?, ?, ?, ?, ?)`
+	id, err = tx.Insert(q1, b.URL, b.Title, b.Shortcut, b.Description, b.Tags, b.CreatedAt, b.UpdatedAt, b.ReadAt)
+	if err != nil {
+		return 0, err
+	}
+
+	q2 := `insert into tags_bookmarks (bookmark_id, tag_id) values (?, ?)`
+	for _, tag_id := range tags_map {
+		if _, err = tx.sqlTx.Exec(q2, id, tag_id); err != nil {
+			return 0, nil
+		}
+	}
+
+	return id, nil
+}
+
+func (tx *Tx) AddTag(name string) (id int64, err error) {
+	q1 := `select id from tags where name = ?`
+	if err := tx.sqlTx.QueryRow(q1, name).Scan(&id); err != nil {
+		if err != sql.ErrNoRows {
+			return 0, err
+		}
+	} else {
+		return id, nil
+	}
+
+	q2 := `insert into tags (name) values(?)`
+	result, err := tx.sqlTx.Exec(q2, name)
 	if err != nil {
 		return 0, err
 	}
@@ -260,5 +346,5 @@ insert into bookmarks (url, title, shortcut, description, tags, createdAt, updat
 		return 0, err
 	}
 
-	return
+	return id, nil
 }

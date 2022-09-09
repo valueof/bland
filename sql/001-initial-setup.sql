@@ -17,8 +17,16 @@ create table bookmarks (
 create table tags (
     id          mediumint not null auto_increment,
     name        varchar(50),
-    bookmark_id mediumint
 
     primary key (id)
-    constraint fk_tags_bookmarks foreign key (bookmark_id) references bookmarks (id)
+    index idx_tags_name (name)
+);
+
+create table tags_bookmarks (
+    bookmark_id mediumint not null
+    tag_id      mediumint not null
+
+    primary key (bookmark_id, tag_id)
+    constraint fk_tags_bookmarks_bookmark_id foreign key (bookmark_id) references bookmarks (id)
+    constraint fk_tags_bookmarks_tag_id foreign key (tag_id) references tags (id)
 );

@@ -10,23 +10,24 @@ create table bookmarks (
     deletedAt   timestamp,
     readAt      timestamp,
     
-    primary key (id)
+    primary key (id),
     index idx_bookmarks_shortcut (shortcut)
 );
 
 create table tags (
     id          mediumint not null auto_increment,
     name        varchar(50),
+    is_author   boolean,
 
-    primary key (id)
+    primary key (id),
     index idx_tags_name (name)
 );
 
 create table tags_bookmarks (
-    bookmark_id mediumint not null
-    tag_id      mediumint not null
+    bookmark_id mediumint not null,
+    tag_id      mediumint not null,
 
-    primary key (bookmark_id, tag_id)
-    constraint fk_tags_bookmarks_bookmark_id foreign key (bookmark_id) references bookmarks (id)
+    primary key (bookmark_id, tag_id),
+    constraint fk_tags_bookmarks_bookmark_id foreign key (bookmark_id) references bookmarks (id),
     constraint fk_tags_bookmarks_tag_id foreign key (tag_id) references tags (id)
 );

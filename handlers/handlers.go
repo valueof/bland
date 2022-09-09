@@ -11,13 +11,19 @@ import (
 
 func RegisterHandlers(r *http.ServeMux) {
 	r.HandleFunc("/", index)
-	r.HandleFunc("/unread", unread)
-	r.HandleFunc("/shortcuts", shortcuts)
-	r.HandleFunc("/add", addURL)
+	r.HandleFunc("/unread/", unread)
+	r.HandleFunc("/shortcuts/", shortcuts)
+	r.HandleFunc("/add/", addURL)
+	r.HandleFunc("/tags/", tags)
+	r.HandleFunc("/authors/", authors)
 }
 
 type withBookmarks struct {
 	Bookmarks *[]models.Bookmark
+}
+
+type withTags struct {
+	Tags *[]models.Tag
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +87,83 @@ func shortcuts(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func tags(w http.ResponseWriter, r *http.Request) {
+	tagName := strings.TrimPrefix(r.URL.Path, "/tags/")
+	if tagName == "" {
+		tags, err := models.FetchAllTags()
+		if err != nil {
+			fmt.Printf("fmt.FetchAllTags: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		lib.RenderTemplate(w, r, "tags.html", lib.TemplateData{
+			Title: "bland: all tags",
+			Data: withTags{
+				Tags: &tags,
+			},
+		})
+
+		return
+	}
+
+	tagName = strings.Trim(tagName, "/")
+	bookmarks, err := models.FetchBookmarksByTag(tagName)
+	if err != nil {
+		fmt.Printf("fmt.FetchBookmarksByTag: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	lib.RenderTemplate(w, r, "index.html", lib.TemplateData{
+		Title: "bland: " + tagName,
+		Data: withBookmarks{
+			Bookmarks: &bookmarks,
+		},
+	})
+}
+
+func authors(w http.ResponseWriter, r *http.Request) {
+	tagName := strings.TrimPrefix(r.URL.Path, "/authors/")
+	if tagName == "" {
+		tags, err := models.FetchAllAuthors()
+		if err != nil {
+			fmt.Printf("fmt.FetchAllAuthors: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		for i, t := range tags {
+			t.Name = strings.TrimPrefix(t.Name, "by:")
+			tags[i] = t
+		}
+
+		lib.RenderTemplate(w, r, "tags.html", lib.TemplateData{
+			Title: "bland: all authors",
+			Data: withTags{
+				Tags: &tags,
+			},
+		})
+
+		return
+	}
+
+	tagName = strings.Trim(tagName, "/")
+	bookmarks, err := models.FetchBookmarksByTag("by:" + tagName)
+	if err != nil {
+		fmt.Printf("fmt.FetchBookmarksByTag: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	lib.RenderTemplate(w, r, "index.html", lib.TemplateData{
+		Title: "bland: by " + tagName,
+		Data: withBookmarks{
+			Bookmarks: &bookmarks,
+		},
+	})
+}
+
 func addURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		lib.RenderTemplate(w, r, "add.html", lib.TemplateData{
@@ -103,7 +186,6 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 			Description: r.FormValue("description"),
 			Shortcut:    r.FormValue("shortcut"),
 			Tags:        []string{},
-			Authors:     []string{},
 			ToRead:      r.FormValue("toread") != "",
 		}
 

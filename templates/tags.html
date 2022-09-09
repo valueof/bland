@@ -1,0 +1,9 @@
+{{define "content"}}
+<div class="tags u-page">
+    {{range .Data.Tags}}
+        <a class="tags--tag" href="{{if .IsAuthor}}/authors/{{else}}/tags/{{end}}{{.Name}}/">
+            {{.Name}}
+        </a>
+    {{end}}
+</div>
+{{end}}

@@ -71,11 +71,6 @@ nav .group span.navitem {
     border-radius: 3px;
 }
 
-.bookmarks {
-    width: 700px;
-    margin: auto 15px;
-}
-
 .bookmarks--bookmark {
     margin-bottom: 30px;
 }
@@ -119,6 +114,15 @@ nav .group span.navitem {
     font-size: 80%;
 }
 
+.tags {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.tags--tag {
+    margin-right: 10px;
+}
+
 /* utils */
 .u-justifyContentEnd { justify-content: flex-end !important; }
 .u-marginTop10 { margin-top: 10px !important; }
@@ -133,4 +137,8 @@ nav .group span.navitem {
 }
 .u-dimmed {
     color: #777 !important;
+}
+.u-page {
+    width: 700px !important;
+    margin: auto 15px !important;
 }

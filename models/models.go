@@ -46,6 +46,12 @@ type Bookmark struct {
 	Authors     []string   `json:"authors"`
 }
 
+type Tag struct {
+	Name       string `json:"name"`
+	IsAuthor   bool   `json:"is_author"`
+	NumEntries int64  `json:"num_entries,omitempty"`
+}
+
 // Structs representing DB tables
 type dbBookmark struct {
 	ID          int64
@@ -58,6 +64,13 @@ type dbBookmark struct {
 	UpdatedAt   sql.NullTime
 	DeletedAt   sql.NullTime
 	ReadAt      sql.NullTime
+}
+
+type dbTag struct {
+	ID         int64
+	Name       string
+	IsAuthor   bool
+	NumEntries int64
 }
 
 func toBookmark(in dbBookmark) (out Bookmark) {
@@ -99,6 +112,14 @@ func toBookmark(in dbBookmark) (out Bookmark) {
 	return
 }
 
+func toTag(in dbTag) (out Tag) {
+	return Tag{
+		Name:       in.Name,
+		IsAuthor:   in.IsAuthor,
+		NumEntries: in.NumEntries,
+	}
+}
+
 func fromBookmark(in Bookmark) (out dbBookmark) {
 	now := time.Now()
 	out = dbBookmark{
@@ -116,20 +137,12 @@ func fromBookmark(in Bookmark) (out dbBookmark) {
 		out.ReadAt = sql.NullTime{Valid: false, Time: now}
 	}
 
-	tags := []string{}
-	tags = append(tags, in.Tags...)
-
-	for _, t := range in.Authors {
-		tags = append(tags, "by:"+t)
-	}
-
-	out.Tags = strings.Join(tags, " ")
-
+	out.Tags = strings.Join(in.Tags, " ")
 	return
 }
 
-func fetchBookmarks(q string) (bookmarks []Bookmark, err error) {
-	rows, err := db.Query(q)
+func fetchBookmarks(q string, args ...any) (bookmarks []Bookmark, err error) {
+	rows, err := db.Query(q, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +167,41 @@ func fetchBookmarks(q string) (bookmarks []Bookmark, err error) {
 		}
 
 		bookmarks = append(bookmarks, toBookmark(b))
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return
+}
+
+func fetchTags(where string, args ...any) (tags []Tag, err error) {
+	q := fmt.Sprintf(`
+select
+	t.id,
+    t.name,
+    t.is_author,
+    count(tb.tag_id) as num_entries
+from tags t
+join tags_bookmarks tb on tb.tag_id = t.id
+%s
+group by t.id, t.name, t.is_author;
+`, where)
+
+	rows, err := db.Query(q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var t dbTag
+		err = rows.Scan(&t.ID, &t.Name, &t.IsAuthor, &t.NumEntries)
+		if err != nil {
+			return nil, err
+		}
+		tags = append(tags, toTag(t))
 	}
 
 	if err = rows.Err(); err != nil {
@@ -225,6 +273,29 @@ order by createdAt desc;
 	return fetchBookmarks(q)
 }
 
+func FetchBookmarksByTag(name string) (bookmarks []Bookmark, err error) {
+	q := `
+select
+	b.id,
+	b.url,
+	b.title,
+	b.shortcut,
+	b.description,
+	b.tags,
+	b.createdAt,
+	b.updatedAt,
+	b.deletedAt,
+	b.readAt
+from bookmarks b
+join tags_bookmarks tb on tb.bookmark_id = b.id
+join tags t on t.id = tb.tag_id
+where t.name = ?
+order by b.createdAt desc;
+`
+
+	return fetchBookmarks(q, name)
+}
+
 func GetShortcutURL(name string) (string, bool) {
 	q := `
 select url
@@ -244,6 +315,16 @@ limit 1`
 		return "", false
 	}
 	return url, true
+}
+
+func FetchAllTags() (tags []Tag, err error) {
+	w := `where t.is_author = 0`
+	return fetchTags(w)
+}
+
+func FetchAllAuthors() (tags []Tag, err error) {
+	w := `where t.is_author = 1`
+	return fetchTags(w)
 }
 
 type Tx struct {
@@ -335,8 +416,8 @@ func (tx *Tx) AddTag(name string) (id int64, err error) {
 		return id, nil
 	}
 
-	q2 := `insert into tags (name) values(?)`
-	result, err := tx.sqlTx.Exec(q2, name)
+	q2 := `insert into tags (name, is_author) values(?, ?)`
+	result, err := tx.sqlTx.Exec(q2, name, strings.HasPrefix(name, "by:"))
 	if err != nil {
 		return 0, err
 	}

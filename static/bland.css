@@ -90,7 +90,7 @@ nav .group span.navitem {
 .bookmarks--meta {
     display: flex;
     justify-content: space-between;
-    font-size: 80%;
+    font-size: 11pt;
 }
 
 .bookmarks--meta a {
@@ -98,7 +98,7 @@ nav .group span.navitem {
 }
 
 .bookmarks--tags {
-    font-size: 80%;
+    font-size: 11pt;
 }
 
 .bookmarks--tags a {
@@ -111,7 +111,7 @@ nav .group span.navitem {
 }
 
 .bookmarks--authors a {
-    font-size: 80%;
+    font-size: 11pt;
 }
 
 .tags {
@@ -121,6 +121,17 @@ nav .group span.navitem {
 
 .tags--tag {
     margin-right: 10px;
+}
+
+/* strap */
+.btn--link {
+    border: none;
+    background: none;
+    color: rgb(0, 0, 238);
+    text-decoration: underline;
+    font-size: 11pt;
+    padding: 0;
+    cursor: pointer;
 }
 
 /* utils */
@@ -133,7 +144,7 @@ nav .group span.navitem {
     background-color: #fff5ca;
     padding: 3px 5px;
     border-radius: 2px;
-    font-size: 80%;
+    font-size: 11pt;
 }
 .u-dimmed {
     color: #777 !important;

@@ -70,7 +70,7 @@ func toBookmark(in dbBookmark) (out Bookmark) {
 		Title:       in.Title,
 		Shortcut:    in.Shortcut,
 		Description: in.Description,
-		ToRead:      in.ReadAt != 0,
+		ToRead:      in.ReadAt == 0,
 		Tags:        []string{},
 		Authors:     []string{},
 	}
@@ -464,4 +464,11 @@ func (tx *Tx) AddTag(name string) (id int64, err error) {
 	}
 
 	return id, nil
+}
+
+func (tx *Tx) MarkAsRead(id int64) (err error) {
+	now := time.Now().Unix()
+	q := `update bookmarks set readAt = ? where id = ?`
+	_, err = tx.sqlTx.Exec(q, now, id)
+	return
 }

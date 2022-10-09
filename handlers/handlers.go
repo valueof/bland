@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ func RegisterHandlers(r *http.ServeMux) {
 	r.HandleFunc("/authors/", authors)
 	r.HandleFunc("/add/", addURL)
 	r.HandleFunc("/edit/", editURL)
+	r.HandleFunc("/api/mark-read/", apiMarkRead)
 }
 
 type withBookmarks struct {
@@ -266,6 +268,48 @@ func editURL(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+}
+
+func apiMarkRead(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	body := new(strings.Builder)
+	_, err := io.Copy(body, r.Body)
+	if err != nil {
+		fmt.Printf("apiMarkRead: %v\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.ParseInt(body.String(), 10, 64)
+	if err != nil {
+		fmt.Printf("invalid body: %s", body.String())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	tx, err := models.BeginTx(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.MarkAsRead(id); err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // func fetchMetadata(w http.ResponseWriter, r *http.Request) {

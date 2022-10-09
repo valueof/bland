@@ -27,12 +27,14 @@
 
             <div class="bookmarks--meta u-marginTop10">
                 <span class="u-dimmed">{{toLower (.CreatedAt.Format "January _2, 2006")}}</span>
-                <span>
+                <span class="bookmarks--actions">
                     {{if .ToRead}}
-                    <a href="#">mark as read</a>&nbsp;&bullet;
+                    <span class="bookmarks--markAsRead">
+                        <button class="btn--link" data-action="mark-read" data-id="{{.ID}}">mark as read</button>&nbsp;&bullet;
+                    </span>
                     {{end}}
                     <a href="/edit/{{.ID}}">edit</a>&nbsp;&bullet;
-                    <a href="#">delete</a>
+                    <button class="btn--link" data-action="delete" data-id="{{.ID}}">delete</button>
                 </span>
             </div>
         </div>

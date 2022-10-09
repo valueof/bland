@@ -17,9 +17,11 @@ import (
 
 var addr *string
 var dev *bool
+var db *string
 
 func init() {
 	addr = flag.String("addr", "", "server address")
+	db = flag.String("db", "", "db file")
 	dev = flag.Bool("dev", false, "dev environment (simplifies logging)")
 }
 
@@ -77,7 +79,7 @@ func main() {
 	}
 
 	logger.Println("connecting to db")
-	err := models.Connect()
+	err := models.Connect(*db)
 	if err != nil {
 		logger.Fatalf("could not connect to db: %v", err)
 	}

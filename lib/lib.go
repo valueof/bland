@@ -49,6 +49,14 @@ func addBreaks(unsafe string) template.HTML {
 	return template.HTML(safe)
 }
 
+func maybeAddSlash(url string) string {
+	if strings.HasSuffix(url, "/") {
+		return url
+	}
+
+	return url + "/"
+}
+
 type TemplateData struct {
 	Data  any
 	Path  string
@@ -61,9 +69,10 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, name string, data Te
 	logger := GetLogger(ctx)
 
 	funcs := template.FuncMap{
-		"addBreaks": addBreaks,
-		"toLower":   strings.ToLower,
-		"hasPrefix": strings.HasPrefix,
+		"addBreaks":     addBreaks,
+		"toLower":       strings.ToLower,
+		"hasPrefix":     strings.HasPrefix,
+		"maybeAddSlash": maybeAddSlash,
 	}
 
 	templates := []string{filepath.Join("templates", "base.html")}

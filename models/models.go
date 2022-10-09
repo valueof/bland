@@ -4,26 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sql.DB
 
-func Connect() (err error) {
-	cfg := mysql.Config{
-		User:      os.Getenv("DBUSER"),
-		Passwd:    os.Getenv("DBPASS"),
-		Net:       "tcp",
-		Addr:      os.Getenv("DBADDR"),
-		DBName:    os.Getenv("DBNAME"),
-		ParseTime: true,
-	}
-
-	db, err = sql.Open("mysql", cfg.FormatDSN())
+func Connect(fp string) (err error) {
+	db, err = sql.Open("sqlite3", fp)
 	if err != nil {
 		return
 	}
@@ -49,7 +39,7 @@ type Bookmark struct {
 type Tag struct {
 	Name       string `json:"name"`
 	IsAuthor   bool   `json:"is_author"`
-	NumEntries int64  `json:"num_entries,omitempty"`
+	NumEntries int64  `json:"num_entries"`
 }
 
 // Structs representing DB tables
@@ -60,10 +50,10 @@ type dbBookmark struct {
 	Shortcut    string
 	Description string
 	Tags        string
-	CreatedAt   sql.NullTime
-	UpdatedAt   sql.NullTime
-	DeletedAt   sql.NullTime
-	ReadAt      sql.NullTime
+	CreatedAt   int64
+	UpdatedAt   int64
+	DeletedAt   int64
+	ReadAt      int64
 }
 
 type dbTag struct {
@@ -80,21 +70,24 @@ func toBookmark(in dbBookmark) (out Bookmark) {
 		Title:       in.Title,
 		Shortcut:    in.Shortcut,
 		Description: in.Description,
-		ToRead:      !in.ReadAt.Valid,
+		ToRead:      in.ReadAt != 0,
 		Tags:        []string{},
 		Authors:     []string{},
 	}
 
-	if in.CreatedAt.Valid {
-		out.CreatedAt = &in.CreatedAt.Time
+	if in.CreatedAt != 0 {
+		tm := time.Unix(in.CreatedAt, 0)
+		out.CreatedAt = &tm
 	}
 
-	if in.UpdatedAt.Valid {
-		out.UpdatedAt = &in.UpdatedAt.Time
+	if in.UpdatedAt != 0 {
+		tm := time.Unix(in.UpdatedAt, 0)
+		out.UpdatedAt = &tm
 	}
 
-	if in.ReadAt.Valid {
-		out.ReadAt = &in.ReadAt.Time
+	if in.ReadAt != 0 {
+		tm := time.Unix(in.ReadAt, 0)
+		out.ReadAt = &tm
 	}
 
 	if len(strings.TrimSpace(in.Tags)) > 0 {
@@ -114,27 +107,27 @@ func toBookmark(in dbBookmark) (out Bookmark) {
 
 func toTag(in dbTag) (out Tag) {
 	return Tag{
-		Name:       in.Name,
-		IsAuthor:   in.IsAuthor,
-		NumEntries: in.NumEntries,
+		Name:     in.Name,
+		IsAuthor: in.IsAuthor,
 	}
 }
 
 func fromBookmark(in Bookmark) (out dbBookmark) {
-	now := time.Now()
+	now := time.Now().Unix()
 	out = dbBookmark{
 		ID:          in.ID,
 		URL:         in.URL,
 		Title:       in.Title,
 		Shortcut:    in.Shortcut,
 		Description: in.Description,
-		CreatedAt:   sql.NullTime{Valid: true, Time: now},
-		UpdatedAt:   sql.NullTime{Valid: true, Time: now},
-		ReadAt:      sql.NullTime{Valid: true, Time: now},
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		ReadAt:      0,
+		DeletedAt:   0,
 	}
 
 	if in.ToRead {
-		out.ReadAt = sql.NullTime{Valid: false, Time: now}
+		out.ReadAt = now
 	}
 
 	out.Tags = strings.Join(in.Tags, " ")
@@ -345,7 +338,7 @@ select url
 from bookmarks
 where
 	shortcut = ? and
-	deletedAt is null
+	deletedAt = 0
 order by createdAt desc
 limit 1`
 
@@ -433,8 +426,8 @@ func (tx *Tx) AddBookmark(data Bookmark) (id int64, err error) {
 	}
 
 	b := fromBookmark(data)
-	q1 := `insert into bookmarks (url, title, shortcut, description, tags, createdAt, updatedAt, readAt) values(?, ?, ?, ?, ?, ?, ?, ?)`
-	id, err = tx.Insert(q1, b.URL, b.Title, b.Shortcut, b.Description, b.Tags, b.CreatedAt, b.UpdatedAt, b.ReadAt)
+	q1 := `insert into bookmarks (url, title, shortcut, description, tags, createdAt, updatedAt, readAt, deletedAt) values(?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	id, err = tx.Insert(q1, b.URL, b.Title, b.Shortcut, b.Description, b.Tags, b.CreatedAt, b.UpdatedAt, b.ReadAt, b.DeletedAt)
 	if err != nil {
 		return 0, err
 	}

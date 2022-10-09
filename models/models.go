@@ -178,7 +178,8 @@ select
     count(tb.tag_id) as num_entries
 from tags t
 join tags_bookmarks tb on tb.tag_id = t.id
-%s
+join bookmarks b on tb.bookmark_id = b.id
+where %s and b.deleted_at = 0
 group by t.id, t.name, t.is_author;
 `, where)
 
@@ -213,12 +214,13 @@ select
 	shortcut,
 	description,
 	tags,
-	createdAt,
-	updatedAt,
-	deletedAt,
-	readAt
+	created_at,
+	updated_at,
+	deleted_at,
+	read_at
 from bookmarks
-order by createdAt desc;
+where deleted_at = 0
+order by created_at desc;
 `
 
 	return fetchBookmarks(q)
@@ -233,13 +235,13 @@ select
 	shortcut,
 	description,
 	tags,
-	createdAt,
-	updatedAt,
-	deletedAt,
-	readAt
+	created_at,
+	updated_at,
+	deleted_at,
+	read_at
 from bookmarks
-where readAt is null
-order by createdAt desc;
+where read_at = 0 and deleted_at = 0
+order by created_at desc;
 `
 
 	return fetchBookmarks(q)
@@ -254,13 +256,13 @@ select
 	shortcut,
 	description,
 	tags,
-	createdAt,
-	updatedAt,
-	deletedAt,
-	readAt
+	created_at,
+	updated_at,
+	deleted_at,
+	read_at
 from bookmarks
-where shortcut <> ""
-order by createdAt desc;
+where shortcut <> "" and deleted_at = 0
+order by created_at desc;
 `
 
 	return fetchBookmarks(q)
@@ -275,12 +277,12 @@ select
 	shortcut,
 	description,
 	tags,
-	createdAt,
-	updatedAt,
-	deletedAt,
-	readAt
+	created_at,
+	updated_at,
+	deleted_at,
+	read_at
 from bookmarks
-where id = ?
+where id = ? and deleted_at = 0
 limit 1
 `
 	b := dbBookmark{}
@@ -318,15 +320,15 @@ select
 	b.shortcut,
 	b.description,
 	b.tags,
-	b.createdAt,
-	b.updatedAt,
-	b.deletedAt,
-	b.readAt
+	created_at,
+	updated_at,
+	deleted_at,
+	read_at
 from bookmarks b
 join tags_bookmarks tb on tb.bookmark_id = b.id
 join tags t on t.id = tb.tag_id
-where t.name = ?
-order by b.createdAt desc;
+where t.name = ? abd b.deleted_at = 0
+order by b.created_at desc;
 `
 
 	return fetchBookmarks(q, name)
@@ -338,8 +340,8 @@ select url
 from bookmarks
 where
 	shortcut = ? and
-	deletedAt = 0
-order by createdAt desc
+	deleted_at = 0
+order by created_at desc
 limit 1`
 
 	var url string
@@ -354,12 +356,12 @@ limit 1`
 }
 
 func FetchAllTags() (tags []Tag, err error) {
-	w := `where t.is_author = 0`
+	w := `t.is_author = 0`
 	return fetchTags(w)
 }
 
 func FetchAllAuthors() (tags []Tag, err error) {
-	w := `where t.is_author = 1`
+	w := `t.is_author = 1`
 	return fetchTags(w)
 }
 
@@ -426,7 +428,7 @@ func (tx *Tx) AddBookmark(data Bookmark) (id int64, err error) {
 	}
 
 	b := fromBookmark(data)
-	q1 := `insert into bookmarks (url, title, shortcut, description, tags, createdAt, updatedAt, readAt, deletedAt) values(?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	q1 := `insert into bookmarks (url, title, shortcut, description, tags, created_at, updated_at, read_at, deleted_at) values(?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	id, err = tx.Insert(q1, b.URL, b.Title, b.Shortcut, b.Description, b.Tags, b.CreatedAt, b.UpdatedAt, b.ReadAt, b.DeletedAt)
 	if err != nil {
 		return 0, err
@@ -467,8 +469,13 @@ func (tx *Tx) AddTag(name string) (id int64, err error) {
 }
 
 func (tx *Tx) MarkAsRead(id int64) (err error) {
-	now := time.Now().Unix()
-	q := `update bookmarks set readAt = ? where id = ?`
-	_, err = tx.sqlTx.Exec(q, now, id)
+	_, err = tx.sqlTx.Exec(`update bookmarks set read_at = ? where id = ?`,
+		time.Now().Unix(), id)
+	return
+}
+
+func (tx *Tx) DeleteBookmark(id int64) (err error) {
+	_, err = tx.sqlTx.Exec(`update bookmarks set deleted_at = ? where id = ?`,
+		time.Now().Unix(), id)
 	return
 }

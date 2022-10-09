@@ -5,10 +5,10 @@ create table if not exists bookmarks (
     shortcut    text,
     description text,
     tags        text,
-    createdAt   integer,
-    updatedAt   integer,
-    deletedAt   integer,
-    readAt      integer
+    created_at  integer,
+    updated_at  integer,
+    deleted_at  integer,
+    read_at     integer
 );
 
 create index if not exists idx_bookmarks_shortcut on bookmarks (shortcut);

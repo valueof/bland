@@ -1,3 +1,5 @@
+window.addEventListener("DOMContentLoaded", main)
+
 function main() {
     window.addEventListener("click", (ev) => {
         const target = ev.target
@@ -13,6 +15,9 @@ function main() {
         switch (action) {
             case "mark-read":
                 markAsRead(ev)
+                break
+            case "delete-bookmark":
+                deleteBookmark(ev)
                 break
             default:
                 console.error("unsupported action:", action)
@@ -31,17 +36,12 @@ async function markAsRead(ev) {
         return
     }
 
-    const resp = await fetch('/api/mark-read/', {method: "POST", body: id})
+    const resp = await fetch('/api/mark-read', {method: "POST", body: id})
     if (!resp.ok) {
         return
     }
 
     const parent = target.closest(".bookmarks--markAsRead")
-    if (!parent) {
-        console.error("couldn't find suitable .bookmarks--markAsRead")
-        return
-    }
-
     parent.replaceChild(document.createTextNode("done!"), target)
 
     setTimeout(() => {
@@ -55,4 +55,27 @@ async function markAsRead(ev) {
     }, 2000)
 }
 
-window.addEventListener("DOMContentLoaded", main)
+async function deleteBookmark(ev) {
+    const target = ev.target
+    const id = target.getAttribute("data-id")
+
+    if (!id) {
+        console.error("called markAsRead without id")
+        return
+    }
+
+    const resp = await fetch('/api/delete-bookmark', {method: "POST", body: id})
+    if (!resp.ok) {
+        return
+    }
+
+    const bookmark = target.closest(`#bookmark-${id}`)
+    const deleted = document.createElement("div")
+    deleted.className = "bookmarks--bookmark u-pill"
+    deleted.innerHTML = "bookmark deleted!"
+    bookmark.parentNode.replaceChild(deleted, bookmark)
+
+    setTimeout(() => {
+        deleted.parentNode.removeChild(deleted)
+    }, 2000)
+}

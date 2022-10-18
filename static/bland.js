@@ -19,9 +19,14 @@ function main() {
             case "delete-bookmark":
                 deleteBookmark(ev)
                 break
+            case "fetch-metadata":
+                fetchMetadata(ev)
+                break
             default:
                 console.error("unsupported action:", action)
         }
+
+        ev.preventDefault()
     })
 }
 
@@ -78,4 +83,29 @@ async function deleteBookmark(ev) {
     setTimeout(() => {
         deleted.parentNode.removeChild(deleted)
     }, 2000)
+}
+
+async function fetchMetadata() {
+    const url = document.querySelector("#url")
+    const title = document.querySelector("#title")
+    const desc = document.querySelector("#desc")
+
+    if (!url) {
+        return
+    }
+
+    const path = '/api/fetch-metadata?u=' + encodeURIComponent(url.value)
+    const resp = await fetch(path, {method: "GET"})
+    if (!resp.ok) {
+        return
+    }
+
+    const data = await resp.json()
+    if (title && title.value == "") {
+        title.value = data.title
+    }
+
+    if (desc && desc.value == "") {
+        desc.value = data.description
+    }
 }

@@ -1,4 +1,4 @@
-create table tags_bookmarks (
+create table if not exists tags_bookmarks (
     bookmark_id integer not null,
     tag_id      integer not null,
     deleted_at  integer,

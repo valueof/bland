@@ -18,11 +18,13 @@ import (
 var addr *string
 var dev *bool
 var db *string
+var setup *bool
 
 func init() {
 	addr = flag.String("addr", "", "server address")
 	db = flag.String("db", "", "db file")
 	dev = flag.Bool("dev", false, "dev environment (simplifies logging)")
+	setup = flag.Bool("setup", false, "create the db and exit")
 }
 
 func tracing(uuid func() string) func(http.Handler) http.Handler {
@@ -67,6 +69,12 @@ func main() {
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 
 	flag.Parse()
+
+	if *setup {
+		createDB(*db)
+		return
+	}
+
 	if *addr == "" {
 		flag.Usage()
 		return

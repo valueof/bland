@@ -3,13 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 
-	"github.com/valueof/bland/models"
+	"github.com/valueof/bland/data"
 	"golang.org/x/net/html"
 )
 
@@ -19,34 +17,15 @@ func registerApiHandlers(r *http.ServeMux) {
 	r.HandleFunc("/api/fetch-metadata", fetchMetadata)
 }
 
-func parseIDFromRequest(w http.ResponseWriter, r *http.Request) (id int64, err error) {
-	if r.Method != "POST" {
-		return 0, fmt.Errorf("wrong request method: expected POST, got %s", r.Method)
-	}
-
-	body := new(strings.Builder)
-	_, err = io.Copy(body, r.Body)
-	if err != nil {
-		return 0, err
-	}
-
-	id, err = strconv.ParseInt(body.String(), 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
-}
-
 func markAsRead(w http.ResponseWriter, r *http.Request) {
-	id, err := parseIDFromRequest(w, r)
+	id, err := parseIDFromRequest(r)
 	if err != nil {
 		fmt.Printf("markAsRead: %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	tx, err := models.BeginTx(r.Context())
+	tx, err := data.BeginTx(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -68,14 +47,14 @@ func markAsRead(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteBookmark(w http.ResponseWriter, r *http.Request) {
-	id, err := parseIDFromRequest(w, r)
+	id, err := parseIDFromRequest(r)
 	if err != nil {
 		fmt.Printf("deleteBookmark: %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	tx, err := models.BeginTx(r.Context())
+	tx, err := data.BeginTx(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

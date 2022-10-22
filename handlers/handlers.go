@@ -3,11 +3,10 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
+	"github.com/valueof/bland/data"
 	"github.com/valueof/bland/lib"
-	"github.com/valueof/bland/models"
 )
 
 func RegisterHandlers(r *http.ServeMux) {
@@ -23,26 +22,16 @@ func RegisterHandlers(r *http.ServeMux) {
 }
 
 type withBookmarks struct {
-	Bookmarks *[]models.Bookmark
+	Bookmarks *[]data.Bookmark
 }
 
 type withTags struct {
-	Tags *[]models.Tag
-}
-
-type withFormValues struct {
-	ID          int64
-	URL         string
-	Title       string
-	Description string
-	Shortcut    string
-	Tags        string
-	ToRead      bool
+	Tags *[]data.Tag
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		if url, ok := models.GetShortcutURL(strings.Trim(r.URL.Path, "/")); ok {
+		if url, ok := data.GetShortcutURL(strings.Trim(r.URL.Path, "/")); ok {
 			http.Redirect(w, r, url, http.StatusSeeOther)
 			return
 		}
@@ -52,7 +41,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bookmarks, err := models.FetchAllBookmarks()
+	bookmarks, err := data.FetchAllBookmarks()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, err)
@@ -68,7 +57,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func unread(w http.ResponseWriter, r *http.Request) {
-	bookmarks, err := models.FetchUnreadBookmarks()
+	bookmarks, err := data.FetchUnreadBookmarks()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -85,7 +74,7 @@ func unread(w http.ResponseWriter, r *http.Request) {
 }
 
 func shortcuts(w http.ResponseWriter, r *http.Request) {
-	bookmarks, err := models.FetchShortcuts()
+	bookmarks, err := data.FetchShortcuts()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -104,7 +93,7 @@ func shortcuts(w http.ResponseWriter, r *http.Request) {
 func tags(w http.ResponseWriter, r *http.Request) {
 	tagName := strings.TrimPrefix(r.URL.Path, "/tags/")
 	if tagName == "" {
-		tags, err := models.FetchAllTags()
+		tags, err := data.FetchAllTags()
 		if err != nil {
 			fmt.Printf("fmt.FetchAllTags: %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -122,7 +111,7 @@ func tags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tagName = strings.Trim(tagName, "/")
-	bookmarks, err := models.FetchBookmarksByTag(tagName)
+	bookmarks, err := data.FetchBookmarksByTag(tagName)
 	if err != nil {
 		fmt.Printf("fmt.FetchBookmarksByTag: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -140,7 +129,7 @@ func tags(w http.ResponseWriter, r *http.Request) {
 func authors(w http.ResponseWriter, r *http.Request) {
 	tagName := strings.TrimPrefix(r.URL.Path, "/authors/")
 	if tagName == "" {
-		tags, err := models.FetchAllAuthors()
+		tags, err := data.FetchAllAuthors()
 		if err != nil {
 			fmt.Printf("fmt.FetchAllAuthors: %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -163,7 +152,7 @@ func authors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tagName = strings.Trim(tagName, "/")
-	bookmarks, err := models.FetchBookmarksByTag("by:" + tagName)
+	bookmarks, err := data.FetchBookmarksByTag("by:" + tagName)
 	if err != nil {
 		fmt.Printf("fmt.FetchBookmarksByTag: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -182,7 +171,9 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		lib.RenderTemplate(w, r, "form.html", lib.TemplateData{
 			Title: "bland: add url",
-			Data:  withFormValues{},
+			Data: &data.Bookmark{
+				ReadAt: 1, // For the 'add url' form, the “to read” checkbox should be unchecked by default
+			},
 		})
 		return
 	}
@@ -196,29 +187,14 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		b := models.Bookmark{
-			URL:         r.FormValue("url"),
-			Title:       r.FormValue("title"),
-			Description: r.FormValue("description"),
-			Shortcut:    r.FormValue("shortcut"),
-			Tags:        []string{},
-			ToRead:      r.FormValue("toread") != "",
-		}
-
-		tags := strings.TrimSpace(r.FormValue("tags"))
-		if len(tags) > 0 {
-			for _, t := range strings.Split(tags, " ") {
-				b.Tags = append(b.Tags, strings.TrimSpace(t))
-			}
-		}
-
-		tx, err := models.BeginTx(r.Context())
+		tx, err := data.BeginTx(r.Context())
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		if _, err := tx.AddBookmark(b); err != nil {
+		b := data.BookmarkFromRequest(r)
+		if _, err := tx.AddBookmark(*b); err != nil {
 			fmt.Println(err)
 			tx.Rollback()
 			w.WriteHeader(http.StatusInternalServerError)
@@ -231,52 +207,71 @@ func addURL(w http.ResponseWriter, r *http.Request) {
 		}
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
 	}
+
+	fmt.Printf("wrong request method: expected GET/POST, got %s\n", r.Method)
+	w.WriteHeader(http.StatusBadRequest)
 }
 
 func editURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		id, err := strconv.Atoi(strings.Trim(strings.TrimPrefix(r.URL.Path, "/edit/"), "/"))
+		id, err := parseIDFromPath(r, "/edit/")
 		if err != nil {
 			fmt.Printf("editURL: %v\n", err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
-		b, err := models.FetchBookmarkByID(int64(id))
+		b, err := data.FetchBookmarkByID(id)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
-		tags := []string{}
-		tags = append(tags, b.Tags...)
-		for _, a := range b.Authors {
-			tags = append(tags, "by:"+a)
-		}
-
 		lib.RenderTemplate(w, r, "form.html", lib.TemplateData{
-			Title: "bland: add url",
-			Data: withFormValues{
-				ID:          b.ID,
-				URL:         b.URL,
-				Title:       b.Title,
-				Description: b.Description,
-				Shortcut:    b.Shortcut,
-				Tags:        strings.Join(tags, " "),
-			},
+			Title: "bland: edit url",
+			Data:  b,
 		})
 		return
 	}
-}
 
-// func fetchMetadata(w http.ResponseWriter, r *http.Request) {
-// meta name=description content
-// meta name=twitter:description content
-// meta name=og:description content
-// meta name=twitter:title content
-// meta property=og:title content
-// title
-//		aux: look for header/h1 tags in the body
-// og:site_name content can help with cleaning up title?
-// }
+	if r.Method == "POST" {
+		id, err := parseIDFromPath(r, "/edit/")
+		if err != nil {
+			fmt.Printf("editURL: %v\n", err)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		b := data.BookmarkFromRequest(r)
+		b.ID = id
+
+		tx, err := data.BeginTx(r.Context())
+		if err != nil {
+			fmt.Printf("data.BeginTx: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = tx.UpdateBookmark(*b)
+		if err != nil {
+			fmt.Printf("tx.UpdateBookmark: %v\n", err)
+			tx.Rollback()
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
+			fmt.Printf("tx.Commit: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, fmt.Sprintf("/#bookmark-%d", b.ID), http.StatusSeeOther)
+		return
+	}
+
+	fmt.Printf("wrong request method: expected GET/POST, got %s\n", r.Method)
+	w.WriteHeader(http.StatusBadRequest)
+}

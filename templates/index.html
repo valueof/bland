@@ -14,19 +14,19 @@
 
             <p>{{addBreaks .Description}}</p>
 
-            {{if or (gt (len .Tags) 0) (gt (len .Authors) 0)}}
+            {{if or (gt (len .ParseTags) 0) (gt (len .ParseAuthors) 0)}}
             <div class="bookmarks--tags u-marginTop10">
-                {{range .Tags}}<a href="/tags/{{.}}">{{.}}</a>{{end}}
+                {{range .ParseTags}}<a href="/tags/{{.}}">{{.}}</a>{{end}}
 
-                {{if gt (len .Authors) 0}}
+                {{if gt (len .ParseAuthors) 0}}
                 <span class="u-dimmed">by: </span>
-                {{range .Authors}}<a href="/authors/{{.}}">{{.}}</a>{{end}}
+                {{range .ParseAuthors}}<a href="/authors/{{.}}">{{.}}</a>{{end}}
                 {{end}}
             </div>
             {{end}}
 
             <div class="bookmarks--meta u-marginTop10">
-                <span class="u-dimmed">{{toLower (.CreatedAt.Format "January _2, 2006")}}</span>
+                <span class="u-dimmed">{{toLower (.TimeCreated.Format "January _2, 2006")}}</span>
                 <span class="bookmarks--actions">
                     {{if .ToRead}}
                     <span class="bookmarks--markAsRead">

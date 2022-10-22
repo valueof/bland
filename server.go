@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/valueof/bland/data"
 	"github.com/valueof/bland/handlers"
 	"github.com/valueof/bland/lib"
-	"github.com/valueof/bland/models"
 )
 
 var addr *string
@@ -79,7 +79,7 @@ func main() {
 	}
 
 	logger.Println("connecting to db")
-	err := models.Connect(*db)
+	err := data.ConnectToDB(*db)
 	if err != nil {
 		logger.Fatalf("could not connect to db: %v", err)
 	}

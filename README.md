@@ -14,13 +14,15 @@ make
 Switch to the new directory and setup the database. This will create a new SQLite database file (bland.db) including all the necessary tables:
 ```sh
 cd ./build
-./bland -db bland.db -setup
+./bland -db ~/db/bland.db -setup
 ```
 
 Now you can run the server:
 ```sh
-./bland -db bland.db -addr localhost:9999
+./bland -db ~/db/bland.db -addr localhost:9999
 ```
+
+Note that the database file is _outside_ the build directory. This is because `make` removes everything in the build directory on each run so keeping your database file in there is just asking for trouble.
 
 ## Development
 To start a development server run this:
@@ -44,7 +46,7 @@ If you, like me, have a JSON file with data from Pinboard you can import it into
 For longer running instances I highly recommend running Bland as a background service and putting it behind a reverse proxy server such as [Nginx](https://www.nginx.com/) or [Caddy](https://caddyserver.com).
 
 #### On Ubuntu Linux
-First, create a new file in the `/lib/systemd/system` directory named `bland.service` and make it something like this (this assumes your `build` directory from the Quick Start section above is in `/home/anton/srv/bland`):
+First, create a new file in the `/lib/systemd/system` directory named `bland.service` and make it something like this (this assumes your `build` directory is in `/home/anton/srv/bland` and your database file is `/home/anton/db/bland.db`):
 ```
 [Unit]
 Description=bland
@@ -54,7 +56,7 @@ Type=simple
 Restart=always
 RestartSec=5s
 WorkingDirectory=/home/anton/srv/bland
-ExecStart=/home/anton/srv/bland/bland -addr localhost:9999 -db /home/anton/srv/bland/bland.db
+ExecStart=/home/anton/srv/bland/bland -addr localhost:9999 -db /home/anton/db/bland.db
 StandardOutput=journal
 StandardError=journal
 

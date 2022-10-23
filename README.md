@@ -41,9 +41,9 @@ If you, like me, have a JSON file with data from Pinboard you can import it into
 ```
 
 ### Run Bland in the background
-For longer running instances I highly recommend running Bland as a background service and putting it behind a reverse proxy server such as NGINX or Caddy.
+For longer running instances I highly recommend running Bland as a background service and putting it behind a reverse proxy server such as [Nginx](https://www.nginx.com/) or [Caddy](https://caddyserver.com).
 
-#### Linux
+#### On Ubuntu Linux
 First, create a new file in the `/lib/systemd/system` directory named `bland.service` and make it something like this (this assumes your `build` directory from the Quick Start section above is in `/home/anton/srv/bland`):
 ```
 [Unit]
@@ -74,6 +74,6 @@ myblanddomain.ts.net {
 }
 ```
 
-If you want to use Nginx, check out this excellent guide from DigitalOcean: [How To Deploy a Go Web Application Using Nginx on Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-deploy-a-go-web-application-using-nginx-on-ubuntu-18-04)
+If you want to use Nginx, check out this excellent guide from DigitalOcean: [How To Deploy a Go Web Application Using Nginx on Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-deploy-a-go-web-application-using-nginx-on-ubuntu-18-04).
 
 Enjoy!

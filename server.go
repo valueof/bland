@@ -13,18 +13,21 @@ import (
 	"github.com/valueof/bland/data"
 	"github.com/valueof/bland/handlers"
 	"github.com/valueof/bland/lib"
+	s "github.com/valueof/bland/setup"
 )
 
 var addr *string
 var dev *bool
 var db *string
 var setup *bool
+var seed *string
 
 func init() {
 	addr = flag.String("addr", "", "server address")
-	db = flag.String("db", "", "db file")
+	db = flag.String("db", "", "db file (required)")
 	dev = flag.Bool("dev", false, "dev environment (simplifies logging)")
 	setup = flag.Bool("setup", false, "create the db and exit")
+	seed = flag.String("seed", "", "import initial data from a json file")
 }
 
 func tracing(uuid func() string) func(http.Handler) http.Handler {
@@ -70,13 +73,25 @@ func main() {
 
 	flag.Parse()
 
-	if *setup {
-		createDB(*db)
+	if *addr == "" && *seed == "" && !*setup {
+		flag.Usage()
 		return
 	}
 
-	if *addr == "" {
+	if *db == "" {
 		flag.Usage()
+		return
+	}
+
+	if *setup {
+		s.CreateDB(*db)
+	}
+
+	if *seed != "" {
+		s.FromPinboard(*db, *seed)
+	}
+
+	if *setup || *seed != "" {
 		return
 	}
 

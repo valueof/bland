@@ -1,4 +1,4 @@
-package main
+package setup
 
 import (
 	"database/sql"
@@ -10,9 +10,9 @@ import (
 	"strings"
 )
 
-// createDB executes each file in the SQL directory (in order) to initialize
+// CreateDB executes each file in the SQL directory (in order) to initialize
 // the complete database needed to run the server
-func createDB(fp string) {
+func CreateDB(fp string) {
 	db, err := sql.Open("sqlite3", fp)
 	if err != nil {
 		fmt.Printf("could not create or connect to db: %v\n", err)

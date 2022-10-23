@@ -71,9 +71,15 @@ func (tx *Tx) AddBookmark(b Bookmark) (id int64, err error) {
 	}
 
 	now := time.Now().Unix()
-	b.CreatedAt = now
-	b.UpdatedAt = now
 	b.DeletedAt = 0
+
+	if b.CreatedAt == 0 {
+		b.CreatedAt = now
+	}
+
+	if b.UpdatedAt == 0 {
+		b.UpdatedAt = now
+	}
 
 	q1 := `
 	insert into bookmarks (url, title, shortcut, description, tags, created_at, updated_at, read_at, deleted_at)

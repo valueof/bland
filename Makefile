@@ -1,7 +1,8 @@
-all: build
-
-dev:
-	go run . --addr localhost:9999 --dev --db ./bland.db
-
-build:
-	go build .
+.PHONY: all
+all:
+	rm -rf ./build
+	mkdir ./build
+	go build -o ./build/bland
+	cp -r ./templates ./build
+	cp -r ./sql	./build
+	cp -r ./static ./build

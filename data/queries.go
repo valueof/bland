@@ -190,10 +190,10 @@ func FetchBookmarksByTag(name string) (bookmarks []Bookmark, err error) {
 		b.shortcut,
 		b.description,
 		b.tags,
-		created_at,
-		updated_at,
-		deleted_at,
-		read_at
+		b.created_at,
+		b.updated_at,
+		b.deleted_at,
+		b.read_at
 	from bookmarks b
 	join tags_bookmarks tb on tb.bookmark_id = b.id
 	join tags t on t.id = tb.tag_id

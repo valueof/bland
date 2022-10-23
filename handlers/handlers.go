@@ -113,7 +113,7 @@ func tags(w http.ResponseWriter, r *http.Request) {
 	tagName = strings.Trim(tagName, "/")
 	bookmarks, err := data.FetchBookmarksByTag(tagName)
 	if err != nil {
-		fmt.Printf("fmt.FetchBookmarksByTag: %v\n", err)
+		fmt.Printf("data.FetchBookmarksByTag: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -154,7 +154,7 @@ func authors(w http.ResponseWriter, r *http.Request) {
 	tagName = strings.Trim(tagName, "/")
 	bookmarks, err := data.FetchBookmarksByTag("by:" + tagName)
 	if err != nil {
-		fmt.Printf("fmt.FetchBookmarksByTag: %v\n", err)
+		fmt.Printf("data.FetchBookmarksByTag: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
